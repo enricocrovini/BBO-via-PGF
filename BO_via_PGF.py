@@ -123,80 +123,80 @@ def gradgradMatern52(X,Y,l):
 #grad with respect to 1st component
 
 
-@jax.partial(jax.jit, static_argnums=(3,6,7,8,9))
-def return_grad(X_obs,y_obs, Xtest, kernel, params_list, err = 1e-6,return_joint = True, start_points = 10, iteration = 20, q = 10):
-    X = X_obs[0:(start_points + q*iteration)]
-    y = y_obs[0:(start_points + q*iteration)]
+# @jax.partial(jax.jit, static_argnums=(3,6,7,8,9))
+# def return_grad(X_obs,y_obs, Xtest, kernel, params_list, err = 1e-6,return_joint = True, start_points = 10, iteration = 20, q = 10):
+#     X = X_obs[0:(start_points + q*iteration)]
+#     y = y_obs[0:(start_points + q*iteration)]
     
-    if(kernel.__name__ == 'RBF_matrix'):
-        kernel = RBF_matrix 
-        grad = gradRBF
-        gradgrad = gradgradRBF
-    elif(kernel.__name__ == 'Matern52_matrix'):
-        kernel = Matern52_matrix
-        grad = gradMatern52
-        gradgrad = gradgradMatern52
+#     if(kernel.__name__ == 'RBF_matrix'):
+#         kernel = RBF_matrix 
+#         grad = gradRBF
+#         gradgrad = gradgradRBF
+#     elif(kernel.__name__ == 'Matern52_matrix'):
+#         kernel = Matern52_matrix
+#         grad = gradMatern52
+#         gradgrad = gradgradMatern52
             
-#     kernel = Matern52_matrix
-#     grad = gradMatern52
-#     gradgrad = gradgradMatern52
+# #     kernel = Matern52_matrix
+# #     grad = gradMatern52
+# #     gradgrad = gradgradMatern52
 
-    params = params_list[0]
-    noise_kernel = params_list[1]
+#     params = params_list[0]
+#     noise_kernel = params_list[1]
     
-    N_obs, n_star = len(X), len(Xtest)
-    mean = np.mean(y)
-    K = kernel(X, X, params)+ np.eye(N_obs)*noise_kernel
-    L = cholesky(K + err*np.eye(N_obs))
-    alpha = solve(L.T,solve(L, y- mean))
+#     N_obs, n_star = len(X), len(Xtest)
+#     mean = np.mean(y)
+#     K = kernel(X, X, params)+ np.eye(N_obs)*noise_kernel
+#     L = cholesky(K + err*np.eye(N_obs))
+#     alpha = solve(L.T,solve(L, y- mean))
         
         
-    if(return_joint):
-        #return joint process and its gradient
+#     if(return_joint):
+#         #return joint process and its gradient
         
-        dim = X.shape[1]
+#         dim = X.shape[1]
 
-        kernel_val = kernel(Xtest, X, params)
-        kernel_grad  = grad(Xtest, X,  params)
+#         kernel_val = kernel(Xtest, X, params)
+#         kernel_grad  = grad(Xtest, X,  params)
 
-        kernel_grad_joint = np.append(kernel_val[:,np.newaxis,:], kernel_grad, axis = 1)
+#         kernel_grad_joint = np.append(kernel_val[:,np.newaxis,:], kernel_grad, axis = 1)
 
 
-        exp_grad_zero_mean = kernel_grad_joint @ alpha 
+#         exp_grad_zero_mean = kernel_grad_joint @ alpha 
         
-        mean_reshape = np.repeat(np.append(np.array(mean.squeeze()),np.zeros(dim))[None,:] , (exp_grad_zero_mean.shape[0]), axis = 0)
+#         mean_reshape = np.repeat(np.append(np.array(mean.squeeze()),np.zeros(dim))[None,:] , (exp_grad_zero_mean.shape[0]), axis = 0)
         
         
-        exp_grad = np.expand_dims(mean_reshape, -1) + np.expand_dims(exp_grad_zero_mean, -1)
+#         exp_grad = np.expand_dims(mean_reshape, -1) + np.expand_dims(exp_grad_zero_mean, -1)
 
 
-        grad_star, cov_star = grad(Xtest, Xtest, params), gradgrad(Xtest, Xtest, params)
+#         grad_star, cov_star = grad(Xtest, Xtest, params), gradgrad(Xtest, Xtest, params)
  
-        kernel_val_star = kernel(Xtest, Xtest, params) + np.eye(n_star)*noise_kernel
+#         kernel_val_star = kernel(Xtest, Xtest, params) + np.eye(n_star)*noise_kernel
 
 
-        A = np.append(kernel_val_star[:,np.newaxis, np.newaxis, :], - grad_star[:, np.newaxis, :, :] , axis= 2)
+#         A = np.append(kernel_val_star[:,np.newaxis, np.newaxis, :], - grad_star[:, np.newaxis, :, :] , axis= 2)
     
-        B = np.append(- np.transpose(grad_star, (2,1,0))[:,:,np.newaxis, :], cov_star , axis= 2)
+#         B = np.append(- np.transpose(grad_star, (2,1,0))[:,:,np.newaxis, :], cov_star , axis= 2)
         
-        cov_joint = np.append(A, B, axis = 1)
+#         cov_joint = np.append(A, B, axis = 1)
         
 
-        covariance_grad = cov_joint - np.einsum('ijk,kl,lmp->ijmp', kernel_grad_joint, solve(K+np.eye(N_obs)*err,np.eye(N_obs)), kernel_grad_joint.T)
+#         covariance_grad = cov_joint - np.einsum('ijk,kl,lmp->ijmp', kernel_grad_joint, solve(K+np.eye(N_obs)*err,np.eye(N_obs)), kernel_grad_joint.T)
 
-        return(exp_grad, covariance_grad)
+#         return(exp_grad, covariance_grad)
 
-    #return gradient sampled independent of process
+#     #return gradient sampled independent of process
     
-    kernel_val = kernel(Xtest, X, params)
-    kernel_grad  = grad(Xtest, X, params)
+#     kernel_val = kernel(Xtest, X, params)
+#     kernel_grad  = grad(Xtest, X, params)
 
 
-    exp_grad = kernel_grad @ alpha       
-    exp_grad_start, cov_star = grad(Xtest, Xtest, params), gradgrad(Xtest, Xtest, params)
-    covariance_grad = cov_star - np.einsum('ijk,kl,lmp->ijmp',kernel_grad, solve(K+np.eye(X.shape[0])*err,np.eye(X.shape[0])),kernel_grad.T)
+#     exp_grad = kernel_grad @ alpha       
+#     exp_grad_start, cov_star = grad(Xtest, Xtest, params), gradgrad(Xtest, Xtest, params)
+#     covariance_grad = cov_star - np.einsum('ijk,kl,lmp->ijmp',kernel_grad, solve(K+np.eye(X.shape[0])*err,np.eye(X.shape[0])),kernel_grad.T)
 
-    return(exp_grad, covariance_grad)
+#     return(exp_grad, covariance_grad)
 
 
 #################################################################################################
@@ -252,80 +252,97 @@ def distance_from_min(x):
 ####################################################################################################################################################
 ####################################################################################################################################################
 
-@jax.partial(jax.jit, static_argnums=(3,6,7,8))
+@partial(jax.jit, static_argnums=(3,6,7,8))
 def return_grad_optimised(X_obs,y_obs, Xtest, kernel, params_list, err, start_points, iteration, q):
+    
     n_star = len(Xtest)    
 
     X = X_obs[0:(start_points + n_star*iteration)]
-    y = y_obs[0:(start_points + n_star*iteration)]
+    y = y_obs[0:(start_points + n_star*iteration),None]
     N_obs = len(X)
-    err = 1e-6
-    
+
+#     err = 1e-6    
     params = params_list[0]
     noise_kernel = params_list[1]
     
-    
-    
-    mean = np.mean(y)
-    K = kernel(X, X, params) #+ np.eye(N_obs)*noise_kernel
-    L = cholesky(K + err*np.eye(N_obs))
-    alpha = solve(L.T,solve(L, y- mean))
-    K_inverse = solve(K+np.eye(N_obs)*err,np.eye(N_obs))
-    
-    
-#     y = y_obs[0:(start_points + q*iteration)]
-    
-#     if(kernel.__name__ == 'RBF_matrix'):
-#         kernel = RBF_matrix 
-#         grad = gradRBF
-#         gradgrad = gradgradRBF
-#     elif(kernel.__name__ == 'Matern52_matrix'):
+        
     kernel = Matern52_matrix
     grad = gradMatern52
     gradgrad = gradgradMatern52
-            
-#     kernel = Matern52_matrix
-#     grad = gradMatern52
-#     gradgrad = gradgradMatern52
     
-        #return joint process and its gradient
+#     kernel = RBF_matrix
+#     grad = gradRBF
+#     gradgrad = gradgradRBF
+    
+    n_star = len(Xtest)    
+
+
+    N_obs = len(X)
+    err = 1e-10
+    
+    
+    mean = np.mean(y)
+    K = kernel(X, X, params) + np.eye(N_obs)*noise_kernel
+    L = cholesky(K + err*np.eye(N_obs))
+    alpha = solve(L.T,solve(L, y- mean))
+    K_inverse = solve(K+np.eye(N_obs)*err,np.eye(N_obs))
+           
         
     dim = X.shape[1]
 
     kernel_val = kernel(Xtest, X, params)
     kernel_grad  = grad(Xtest, X,  params)
 
-    kernel_grad_joint = np.append(kernel_val[:,np.newaxis,:], kernel_grad, axis = 1)
-
+    #kernel_grad_joint = np.append(kernel_val[:,np.newaxis,:], kernel_grad, axis = 1).reshape(n_star*(dim+1), N_obs)
+    kernel_grad_reshape = kernel_grad.reshape(n_star*(dim), N_obs)
+    kernel_grad_joint = np.block([[kernel_val], [kernel_grad_reshape]])
+    
+#     kernel_grad_t_reshape = np.transpose(kernel_grad, (2,1,0)).reshape(n_star*(dim), N_obs).T
+    kernel_grad_t_joint = np.block([kernel_val.T, kernel_grad_reshape.T])
 
     exp_grad_zero_mean = kernel_grad_joint @ alpha 
         
-    mean_reshape = np.repeat(np.append(np.array(mean.squeeze()),np.zeros(dim))[None,:] , (exp_grad_zero_mean.shape[0]), axis = 0)
+    mean_extended = np.append(np.ones(n_star)*mean.flatten(), np.zeros(n_star*dim)).flatten()#np.repeat(np.append(np.array(mean.squeeze()),np.zeros(dim))[None,:] , (exp_grad_zero_mean.shape[0]), axis = 0)
         
         
-    exp_grad = np.expand_dims(mean_reshape, -1) + np.expand_dims(exp_grad_zero_mean, -1)
+#     exp_grad = np.expand_dims(mean_reshape, -1) + np.expand_dims(exp_grad_zero_mean, -1)
 
+    exp_grad = exp_grad_zero_mean + mean_extended[:,None]
+    
 
     grad_star, cov_star = grad(Xtest, Xtest, params), gradgrad(Xtest, Xtest, params)
 
     kernel_val_star = kernel(Xtest, Xtest, params) + np.eye(n_star)*noise_kernel
+ 
 
+    grad_star_reshape = grad_star.reshape(n_star*(dim), n_star) #np.append(kernel_val_star[:,np.newaxis,:], grad_star, axis = 1).reshape(n_star*(dim+1), n_star)
+    grad_star_t_reshape = grad_star_reshape.T #np.transpose(grad_star, (2,1,0)).reshape(n_star*(dim), n_star).T #np.append(kernel_val_star[:,np.newaxis,:], grad_star, axis = 1).reshape(n_star*(dim+1), n_star)
 
-    A = np.append(kernel_val_star[:,np.newaxis, np.newaxis, :], - grad_star[:, np.newaxis, :, :] , axis= 2)
     
-    B = np.append(- np.transpose(grad_star, (2,1,0))[:,:,np.newaxis, :], cov_star , axis= 2)
-        
-    cov_joint = np.append(A, B, axis = 1)
-        
+    cov_star_reshape = cov_star.reshape(1,n_star*(dim),cov_star.shape[2], cov_star.shape[3]).swapaxes(-1,-2).reshape(1,n_star*(dim),n_star*(dim),1).squeeze()    
 
-    covariance_grad = cov_joint - np.einsum('ijk,kl,lmp->ijmp', kernel_grad_joint, K_inverse, kernel_grad_joint.T)
+#     A = np.append(kernel_val_star[:,np.newaxis, np.newaxis, :],  grad_star[:, np.newaxis, :, :] , axis= 2)
+    
+#     B = np.append(np.transpose(grad_star, (2,1,0))[:,:,np.newaxis, :], cov_star , axis= 2)
+        
+    cov_joint = np.block([[kernel_val_star, grad_star_t_reshape], [grad_star_reshape, cov_star_reshape]])
+#     print(cov_joint.shape)
+#     print(kernel_grad_joint.shape)
+
+#     covariance_grad = cov_joint - np.einsum('ijk,kl,lmp->ijmp', kernel_grad_joint, K_inverse, kernel_grad_joint.T)
+
+#     return(exp_grad, covariance_grad)
+
+
+    
+    covariance_grad = cov_joint - kernel_grad_joint @  K_inverse @ kernel_grad_t_joint
 
     return(exp_grad, covariance_grad)
 
 
 
 
-@jax.partial(jax.jit, static_argnums=(2, 6, 8, 9, 10,11,12,13))
+@partial(jax.jit, static_argnums=(2, 6, 8, 9, 10,11,12,13))
 def compute_chains_compiled_opt(obs_set, obs_set_value,kernel_GP,kernel_params,step_size , k_stein , T ,a, M  , method, dim, q , start_points , iteration, current_point, key):
 
     if(kernel_GP.__name__ == 'RBF_matrix'):
@@ -362,25 +379,39 @@ def compute_chains_compiled_opt(obs_set, obs_set_value,kernel_GP,kernel_params,s
 
 
 ''' check current point and total points '''
-@jax.partial(jax.jit, static_argnums=(2,3,4))
-def return_grad_stein_combinations(mu_grad_joint,cov_grad_joint ,  dim, q, M, curr_min , k_stein, current_point,a , key):
+@partial(jax.jit, static_argnums=(2,3,4))
+def return_grad_stein_combinations(mu_joint,cov_joint ,  dim, q, M, curr_min , k_stein, current_point,a , key):
     N = current_point.shape[0]
+ #     mu_joint = mu_grad_joint.flatten()
+#     cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
     
-    mu_joint = mu_grad_joint.flatten()
-    cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
+#     process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
     
+#     U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
+    
+#     L = U * np.sqrt(S[..., None, :])
+    
+#     joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)    
+
     process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
     
-    U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
+    U, S, _ = svd(cov_joint+ 1e-9*np.identity(cov_joint.shape[0]))
     
     L = U * np.sqrt(S[..., None, :])
     
-    joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)  
+    joint_process_samples = (mu_joint.T + np.einsum('ij, kj -> ki', L, process))
+    
+    process_samples = joint_process_samples[:,0:N]
+    grad_samples = joint_process_samples[:,N:]
+    
+    joint_process = np.append(process_samples[:,:,None], grad_samples.reshape(M,N,dim), axis = 2)
+    
+#     joint_process = np.transpose(joint_process_samples.reshape(M, dim+1, N)  , (0,2,1))
     
     l_combinations = np.array(list(itertools.combinations(np.arange(N), q)))
     joint_process_combinations = joint_process[:,l_combinations,: ] #Mxnum_combxqxdim+1
     
-    combinations_current_points = current_point[l_combinations,:] # num_comb x q x dim 
+    combinations_current_points = current_point[l_combinations,:] # num_comb x q x dim +1
         
     process_real = joint_process_combinations[:,:,:,0] #Mxnum_combxq
     grad_process = joint_process_combinations[:,:,:,1:] #Mxnum_combxqxdim
@@ -412,19 +443,32 @@ def return_grad_stein_combinations(mu_grad_joint,cov_grad_joint ,  dim, q, M, cu
     return(grad_complete)
 
 
-@jax.partial(jax.jit, static_argnums=(2,3,4))
-def return_grad_wasserstein_combinations(mu_grad_joint,cov_grad_joint ,  dim, q, M, curr_min , k_stein, current_point,a , key):
+@partial(jax.jit, static_argnums=(2,3,4))
+def return_grad_wasserstein_combinations(mu_joint,cov_joint ,  dim, q, M, curr_min , k_stein, current_point,a , key):
     N =current_point.shape[0]   
-    mu_joint = mu_grad_joint.flatten()
-    cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
+#     mu_joint = mu_grad_joint.flatten()
+#     cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
     
+#     process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
+    
+#     U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
+    
+#     L = U * np.sqrt(S[..., None, :])
+    
+#     joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)    
+
     process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
     
-    U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
+    U, S, _ = svd(cov_joint+ 1e-9*np.identity(cov_joint.shape[0]))
     
     L = U * np.sqrt(S[..., None, :])
+    joint_process_samples = (mu_joint.T + np.einsum('ij, kj -> ki', L, process))
     
-    joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)    
+    process_samples = joint_process_samples[:,0:N]
+    grad_samples = joint_process_samples[:,N:]
+    
+    joint_process = np.append(process_samples[:,:,None], grad_samples.reshape(M,N,dim), axis = 2)
+#     joint_process = np.transpose(joint_process_samples.reshape(M, dim+1, N)  , (0,2,1))
         
     process = joint_process[:,:,0] #MxN
     grads = joint_process[:,:,1:]  #MxNxdim
@@ -479,65 +523,64 @@ def return_grad_wasserstein_combinations(mu_grad_joint,cov_grad_joint ,  dim, q,
 
 
 
+# @jax.partial(jax.jit, static_argnums=(2,4,6,7,8,9))
+# def qEI_MCMC_combinations(obs_set, obs_set_value, kernel_GP,kernel_params , M  , method, dim, q , start_points , iteration, current_point, key):
+    
+    
+    
+#     if(kernel_GP.__name__ == 'RBF_matrix'):
+#         kernel = RBF_matrix 
+#     elif(kernel_GP.__name__ == 'Matern52_matrix'):
+#         kernel = Matern52_matrix
 
-@jax.partial(jax.jit, static_argnums=(2,4,6,7,8,9))
-def qEI_MCMC_combinations(obs_set, obs_set_value, kernel_GP,kernel_params , M  , method, dim, q , start_points , iteration, current_point, key):
+#     points = []
+#     grad = []
     
+#     X = obs_set[0:(start_points + q*iteration)]
+#     y = obs_set_value[0:(start_points + q*iteration)]
     
+#     curr_min = np.min(y)
     
-    if(kernel_GP.__name__ == 'RBF_matrix'):
-        kernel = RBF_matrix 
-    elif(kernel_GP.__name__ == 'Matern52_matrix'):
-        kernel = Matern52_matrix
-
-    points = []
-    grad = []
+#     N_obs = len(X)
+#     err = 1e-6
+#     mean = np.mean(y)
+#     K = kernel(X, X, kernel_params)
+#     L = cholesky(K + err*np.eye(N_obs))
+#     alpha = solve(L.T,solve(L, y- mean))
+#     K_inverse = solve(K+np.eye(N_obs)*err,np.eye(N_obs))
     
-    X = obs_set[0:(start_points + q*iteration)]
-    y = obs_set_value[0:(start_points + q*iteration)]
+#     mu_grad_joint, cov_grad_joint =  return_grad_optimised(obs_set, obs_set_value, current_point, kernel,kernel_params, err, start_points, iteration, q, mean, K, L, alpha, K_inverse)
     
-    curr_min = np.min(y)
+#     N = current_point.shape[0]
     
-    N_obs = len(X)
-    err = 1e-6
-    mean = np.mean(y)
-    K = kernel(X, X, kernel_params)
-    L = cholesky(K + err*np.eye(N_obs))
-    alpha = solve(L.T,solve(L, y- mean))
-    K_inverse = solve(K+np.eye(N_obs)*err,np.eye(N_obs))
+#     mu_joint = mu_grad_joint.flatten()
+#     cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
     
-    mu_grad_joint, cov_grad_joint =  return_grad_optimised(obs_set, obs_set_value, current_point, kernel,kernel_params, err, start_points, iteration, q, mean, K, L, alpha, K_inverse)
+#     process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
     
-    N = current_point.shape[0]
+#     U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
     
-    mu_joint = mu_grad_joint.flatten()
-    cov_joint = cov_grad_joint.reshape(1,N*(dim+1),cov_grad_joint.shape[2], cov_grad_joint.shape[3]).swapaxes(-1,-2).reshape(1,N*(1+dim),N*(dim+1),1).squeeze()    
+#     L = U * np.sqrt(S[..., None, :])
     
-    process = random.normal(key, shape = (M,N*(dim+1)))  #random.multivariate_normal(key, np.zeros_like(mu_joint), np.eye(cov_joint.shape[0]), (M,)) 
+#     joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)  
     
-    U, S, _ = svd(cov_joint+ 1e-8*np.identity(cov_joint.shape[0]))
+#     l_combinations = np.array(list(itertools.combinations(np.arange(N), q)))
+#     joint_process_combinations = joint_process[:,l_combinations,: ] #Mxnum_combxqxdim+1
     
-    L = U * np.sqrt(S[..., None, :])
-    
-    joint_process = (mu_joint + np.einsum('ij, kj -> ki', L, process)).reshape(M, N , dim+1)  
-    
-    l_combinations = np.array(list(itertools.combinations(np.arange(N), q)))
-    joint_process_combinations = joint_process[:,l_combinations,: ] #Mxnum_combxqxdim+1
-    
-    combinations_current_points = current_point[l_combinations,:] # num_comb x q x dim 
+#     combinations_current_points = current_point[l_combinations,:] # num_comb x q x dim 
         
-    process_real = joint_process_combinations[:,:,:,0] #Mxnum_combxq
+#     process_real = joint_process_combinations[:,:,:,0] #Mxnum_combxq
     
-    alpha_pos = (curr_min - np.min(process_real, axis = -1)) #Mxnum_comb
+#     alpha_pos = (curr_min - np.min(process_real, axis = -1)) #Mxnum_comb
 
-    sims = np.clip(alpha_pos, 0)
-    qI_sim = np.mean(sims , axis = 0)    #num_comb     
-    return qI_sim
+#     sims = np.clip(alpha_pos, 0)
+#     qI_sim = np.mean(sims , axis = 0)    #num_comb     
+#     return qI_sim
 
 
-qEI_MCMC_combinations_opt = jax.jit(vmap(qEI_MCMC_combinations, 
-                                in_axes=(None , None,None,None,None,None,None,None,None,None,0,0)),
-                    static_argnums=(2,4,6,7,8,9))
+# qEI_MCMC_combinations_opt = jax.jit(vmap(qEI_MCMC_combinations, 
+#                                 in_axes=(None , None,None,None,None,None,None,None,None,None,0,0)),
+#                     static_argnums=(2,4,6,7,8,9))
 
 
 @jax.partial(jax.jit, static_argnums=(2, 7, 8, 9,11, 12,14))
