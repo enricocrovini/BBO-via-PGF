@@ -43,9 +43,24 @@ from jax.config import config; config.update("jax_enable_x64", True)
 #function to minimize
 
 def Ackley5(X,d = 5):
+
     return( -20*np.exp(-.2*np.sqrt(1./d*(np.sum(X**2, axis = 1))))-np.exp((1./d*(np.sum(np.cos(2*np.pi*X), axis = 1))))+np.exp(1)+20)
 true_min = 0
 ############# Minimise function ###########
+
+# q = 3
+# N = 10
+# Num_Runs = 5
+# Iterations = 15
+# Start_Points = 50
+# K = .5
+# step_size = .5
+# T = 2000
+# R = 1
+# M = 1000
+# a = .01
+
+
 
 q = 3
 N = 10
@@ -54,15 +69,15 @@ Iterations = 15
 Start_Points = 50
 K = .5
 step_size = .5
-T = 2000
+T = 3000
 R = 1
 M = 1000
 a = .01
 
 
-q_wass = 2
-step_size_wass = 1
-T_wass = 1000
+q_wass = 3
+step_size_wass = .5
+T_wass = 1500
 a_wass = .005
 method = 'wasserstein'
 ##Normal experiments

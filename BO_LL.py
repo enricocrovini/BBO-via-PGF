@@ -1,4 +1,8 @@
 import os
+
+#this runs only with jax = 0.2.10 and jaxlib 0.1.64
+
+
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS']='1' 
 os.environ['OPENBLAS_NUM_THREADS']='1'
@@ -32,8 +36,10 @@ from BO_via_PGF import *
 # from tqdm import tqdm 
 
 import jax.numpy as np
-from jax.ops import index, index_add, index_update
-from jax import grad, jit, vmap, jacfwd, jacrev, partial
+from jax.ops import index, index_update
+# from jax.numpy import index_exp as index
+from jax import grad, jit, vmap, jacfwd, jacrev
+from jax import partial
 from jax import random
 from jax import device_put
 from jax.lax import fori_loop, scan, cond
@@ -177,6 +183,8 @@ def estimate_Gamma(var, key, T, dt):
     for i in np.arange(nsamples):
         resi, momi = forward_solver(b ,r, y0_list[i,:], timespan)
         mom_samples = index_update(mom_samples, index[i,:], momi)
+#         mom_samples = mom_samples.at[i,:].set(momi)
+
         #mom_samples[i,:] = momi
   
     G_out = np.cov(mom_samples.T)
@@ -188,6 +196,8 @@ def log_prob_product(x, rng_key, prior=True):
     def body_fun1(z, j):
         _, GT_params = forward_solver(x[j,0], x[j, 1], y0_list[j,:], times)
         z = index_update(z, index[j, :],  (G_truth - GT_params))
+#         z = z.at[j, :].set(G_truth - GT_params)
+
         return z, None
     
     init_choices = random.choice(rng_key, np.arange(NUM_RANDOM_INIT_CONDITIONS), (num_par,), replace=True)
@@ -210,6 +220,8 @@ def log_prob(x, rng_key, prior=True):
     def body_fun1(z, j):
         _, GT_params = forward_solver(x[j,0], x[j, 1], y0_list[j,:], times)
         z = index_update(z, index[j, :],  (G_truth - GT_params))
+#         z = z.at[j, :].set(G_truth - GT_params)
+
         return z, None
     
     init_choices = random.choice(rng_key, np.arange(NUM_RANDOM_INIT_CONDITIONS), (num_par,), replace=True)
@@ -233,6 +245,7 @@ def GX(x,key):
     def body_fun1(z, j):
         _, GT_params = forward_solver(x[j,0], x[j, 1], y0_list[j,:], times)
         z = index_update(z, index[j, :],  GT_params)
+#         z = z.at[j, :].set(GT_params)
         return z, None
     
     init_choices = random.choice(key, np.arange(NUM_RANDOM_INIT_CONDITIONS), (num_par,), replace=True)
@@ -265,6 +278,8 @@ def estimate_Gamma(var, key, T, dt):
     for i in np.arange(nsamples):
         resi, momi = forward_solver(b ,r, y0_list[i,:], timespan)
         mom_samples = index_update(mom_samples, index[i,:], momi)
+#         mom_samples = mom_samples.at[i,:].set(momi)
+
         #mom_samples[i,:] = momi
   
     G_out = np.cov(mom_samples.T)
@@ -289,24 +304,33 @@ Iterations = 20
 Start_Points = 5
 
 
-K = .5
+# K = .5
+# step_size_stein = .5
+# T_stein = 5000
+# R = 1
+# M = 1000
+# a_stein = .01 
+# q = 3
+
+K = 1
 step_size_stein = .5
-T_stein = 4000
+T_stein = 6000
 R = 1
-M = 1000
-a_stein = .001 
-q = 2
-
-
-q_wasserstein = 2
-step_size_wasserstein = .1
-a_wasserstein = .01 
-T_wasserstein = 2000 #
+M = 500
+a_stein = .05 
+q = 3
 
 
 
+q_wasserstein = 3
+step_size_wasserstein = .5
+a_wasserstein = .005 
+T_wasserstein = 3000 #
 
-method = 'wasserstein'
+
+
+
+method = 'stein'
 
 if __name__ == "__main__":
     print('\n\n', method, '\n\n')
@@ -338,7 +362,6 @@ if __name__ == "__main__":
     
     numpy.random.seed(1234)
     seeds = numpy.random.randint(0,1000, 10)
-
 
     regret_LL_1 , trace_LL_1 , obs_set_LL_1, obs_set_value_LL_1  = BO_SVGD_vect(LL_new, M=M,N=N, a = a, kernel_GP = Matern52_matrix,norm_data = True, iterations = Iterations,q = q,num_runs = Num_Runs,T = T, step_size = step_size,R = R, grid = grid, k_stein = K, set_init = obs_set_init, set_init_val = obs_set_value_init,r_init = True,  num_init = Start_Points, method = method, seeds = seeds, noise = noise)
     

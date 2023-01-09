@@ -729,8 +729,8 @@ def BO_SVGD_vect(func, iterations, grid, set_init,set_init_val, kernel_GP = RBF_
             
             points, final = next_points_qEI_opt(obs_set, data, kernel_GP, kernel_params_list, starting_points, T, a , R , q ,  M,  k_stein,step_size ,num_init, it, return_gradient_method) #version with R>1
 
-            numpy.save('Optimisation_routines/'+ str(func.__name__) +'/gradient_control/gradient_norm_'+method+'_iteration' + str(it) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', final[1])
-            numpy.save('Optimisation_routines/'+ str(func.__name__) +'/trace_control/trace_'+method+'_iteration' + str(it) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', final[0])
+#             numpy.save('Optimisation_routines/'+ str(func.__name__) +'/gradient_control/gradient_norm_'+method+'_iteration' + str(it) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', final[1])
+#             numpy.save('Optimisation_routines/'+ str(func.__name__) +'/trace_control/trace_'+method+'_iteration' + str(it) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', final[0])
 
 
             
@@ -748,7 +748,7 @@ def BO_SVGD_vect(func, iterations, grid, set_init,set_init_val, kernel_GP = RBF_
             it +=1
             
             np.save('Optimisation_routines/' + str(func.__name__) + '/results/regret_'+method+'_' + str(func.__name__) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', regret)
-            np.save('Optimisation_routines/' + str(func.__name__) + '/results/obs_'+method+'_' + str(func.__name__) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', obs_set)
+#             np.save('Optimisation_routines/' + str(func.__name__) + '/results/obs_'+method+'_' + str(func.__name__) +'_N_' + str(N) +'_q_'+ str(q)+ '_seed_'+str(seed)+'.npy', obs_set)
 
 
 

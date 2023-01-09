@@ -51,15 +51,15 @@ N = 10
 Num_Runs = 5
 Iterations = 15
 Start_Points = 10
-K = .1
+K = .5
 step_size = .5
-T = 2000
+T = 3000
 R = 1
-M = 1000
-a_stein = .01
+M = 500
+a_stein = .02
 
-a_wasserstein = 0.01
-
+a_wasserstein = 0.015
+T_wasserstein = 1500
 method = 'wasserstein'
 ##Normal experiments
 # Q = 10
@@ -79,6 +79,7 @@ if __name__ == "__main__":
         a = a_stein
     elif(method =='wasserstein'):
         a = a_wasserstein
+        T = T_wasserstein
 
     numpy.random.seed(1332)
     grid = Space([(-5., 5.), (-5., 5.)])
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     lhs = Lhs(criterion="maximin", iterations=10000)
     obs_set_init = None #np.array(lhs.generate(grid.dimensions, Start_Points))
     obs_set_value_init = None #'Ackley(np.array(obs_set_init))
-
+    
     
     numpy.random.seed(1234)
     seeds = numpy.random.randint(0,1000, 10)

@@ -1,12 +1,13 @@
 import os
-# os.environ['OMP_NUM_THREADS'] = '10'
-# os.environ['MKL_NUM_THREADS']='10' 
-# os.environ['OPENBLAS_NUM_THREADS']='10'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS']='1' 
+os.environ['OPENBLAS_NUM_THREADS']='1'
 
-# os.environ["NUM_INTER_THREADS"]="10"
-# os.environ["NUM_INTRA_THREADS"]="10"
+os.environ["NUM_INTER_THREADS"]="1"
+os.environ["NUM_INTRA_THREADS"]="1"
 
-# os.environ["XLA_FLAGS"] = ("--intra_op_parallelism_threads=10")
+os.environ["XLA_FLAGS"] = ("--xla_cpu_multi_thread_eigen=false "
+                           "intra_op_parallelism_threads=1")
 
 import jax.numpy as np
 import numpy
@@ -49,7 +50,7 @@ def Griewank5(x, dim = 5):
     return 1 + (partA/4000.0) - partB  
 ############# Minimise function ###########
 
-q = 2
+q = 3
 N = 10
 Num_Runs = 5
 Iterations = 20
@@ -65,17 +66,17 @@ M = 1000
 # a = .0001
 
 K = .5
-step_size = 1
-T = 4000
-a = .00005
+step_size = .5
+T = 5000
+a = 0.0001 #.00001
 
 
-step_size_wass = 1
-T_wass = 1000
-a_wass = .0001
+step_size_wass = .5
+T_wass = 3000
+a_wass = .0005
 
 
-method = 'wasserstein'
+method = 'stein'
 
 if __name__ == "__main__":
     #pool = Pool(2)
@@ -94,6 +95,9 @@ if __name__ == "__main__":
     
     numpy.random.seed(1234)
     seeds = numpy.random.randint(0,1000, 10)
+    #9:10 new a_wass = 0.001 T = 2500 too much regularisation
+    #other = 0.0001 and T = 2000 results seem ok but not great
+    #new try reg = 0.0005 T = 3000 with seeds from 5 to 9
     
     regret_Griewank5_JAX , obs_set_Griewank5, obs_set_value_Griewank5 = BO_SVGD_vect(Griewank5,N = N, M = M, a = a, kernel_GP = Matern52_matrix, iterations = Iterations,q = q,num_runs = Num_Runs,T = T, step_size = step_size,R = R, grid = grid, k_stein = K, set_init = obs_set_init, set_init_val = obs_set_value_init,r_init = True, num_init = Start_Points, method = method, seeds = seeds, noise = True)
     

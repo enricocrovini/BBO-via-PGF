@@ -59,14 +59,22 @@ N = 10
 Num_Runs = 5
 Iterations = 20
 Start_Points = 10
-K = .1
-step_size = .5
-T_stein = 2000
+# K = .1
+# step_size = .5
+# T_stein = 2000
+# R = 1
+# M = 1000
+# a_stein = .001 #0.001 promising
+
+
+K = .5
+step_size = .3
+T_stein = 5000
 R = 1
-M = 1000
+M = 500
 a_stein = .001 #0.001 promising
 
-a_wasserstein = .001 
+a_wasserstein = .001
 T_wasserstein = 2000 #
 
 
@@ -93,10 +101,10 @@ if __name__ == "__main__":
 
     
     numpy.random.seed(1234)
-    seeds = numpy.random.randint(0,1000, 10)[0:1]
+    seeds = numpy.random.randint(0,1000, 10)[7:8]
     
     
-    regret_Griewank_JAX , obs_set_Griewank, obs_set_value_Griewank= BO_SVGD_vect(Griewank, M=M,N=N, a = a, kernel_GP = Matern52_matrix, iterations = Iterations,q = q,num_runs = Num_Runs,T = T, step_size = step_size,R = R, grid = grid, k_stein = K, set_init = obs_set_init, set_init_val = obs_set_value_init,r_init = True,  num_init = Start_Points, method = method, seeds = seeds)
+    regret_Griewank_JAX , obs_set_Griewank, obs_set_value_Griewank= BO_SVGD_vect(Griewank, M=M,N=N, a = a, kernel_GP = Matern52_matrix, iterations = Iterations,q = q,num_runs = Num_Runs,T = T, step_size = step_size,R = R, grid = grid, k_stein = K, set_init = obs_set_init, set_init_val = obs_set_value_init,r_init = True,  num_init = Start_Points, method = method, seeds = seeds, noise = True)
     
     
 
